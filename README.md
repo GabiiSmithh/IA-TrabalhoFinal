@@ -21,3 +21,11 @@ py -m venv .venv
 ```
 
 e depois processeguir com a instalação das dependências.
+
+# Arquivos do Projeto
+
+- Atualmente, o projeto possui os arquivos:
+    - gclm.py -> Extrator de caracteristicas (disponibilizados pelo professor)
+    - lbp.py -> Extrator de caracteristicas (disponibilizados pelo professor)
+    - lpq.py -> Extrator de caracteristicas (disponibilizados pelo professor)
+    - codigo.py -> Inicio da implementação do trabalho final
