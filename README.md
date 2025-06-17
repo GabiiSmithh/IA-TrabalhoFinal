@@ -28,4 +28,4 @@ e depois processeguir com a instalação das dependências.
     - gclm.py -> Extrator de caracteristicas (disponibilizados pelo professor)
     - lbp.py -> Extrator de caracteristicas (disponibilizados pelo professor)
     - lpq.py -> Extrator de caracteristicas (disponibilizados pelo professor)
-    - codigo.py -> Inicio da implementação do trabalho final
+    - system.py -> Inicio da implementação do trabalho final (gemini-pro é incrivel :D)
