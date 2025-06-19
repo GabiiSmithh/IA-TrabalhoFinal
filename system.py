@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg') # Define o backend para Agg
+import matplotlib.pyplot as plt
+import seaborn as sns
 import os # Navegar pelos diretórios
 from glob import glob # Listar arquivos
 
@@ -23,8 +27,8 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler # Normalização das características
 
 # Configurações Globais
-DATA_DIR = 'imagens_soja' # Caminho para a pasta que contém as subpastas das classes de imagens
-CLASS_NAMES = ['intact', 'spotted', 'immature', 'broken', 'skin-damaged'] # Mapeamento de nomes de pastas para rótulos numéricos
+DATA_DIR = 'soybean-images' # Caminho para a pasta que contém as subpastas das classes de imagens
+CLASS_NAMES = ['intact', 'spotted', 'immature', 'broken', 'skin-damage'] # Mapeamento de nomes de pastas para rótulos numéricos
 LABEL_MAP = {name: i for i, name in enumerate(CLASS_NAMES)} # ordem das classes define índices na matriz de confusão
 
 # Funções Axiliares
@@ -156,7 +160,8 @@ def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5): # Fu
     plt.title('Matriz de Confusão - KNN (Conjunto de Teste)')
     plt.xlabel('Predito')
     plt.ylabel('Verdadeiro')
-    plt.show()
+    plt.savefig('matriz_confusao_knn.png') # Adicione esta linha para salvar a figura
+    plt.close() # Opcional: fecha a figura da memória após salvar para liberar recursos
 
     # --- Avaliação Árvore de Decisão ---
     print("\n--- Avaliando o Melhor Modelo de Árvore de Decisão no Conjunto de Teste ---")
