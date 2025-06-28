@@ -1,30 +1,32 @@
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use('Agg') # Define o backend para Agg
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os # Navegar pelos diretórios
-from glob import glob # Listar arquivos
+import os
+from glob import glob
 
-# Carregamento e pré-processamento de imagens
 from skimage.io import imread
 from skimage.color import rgb2gray
-from skimage import img_as_ubyte # Converter imagens para 0-255 uint8
+from skimage import img_as_ubyte
 
-# Funções de extratores dos arquivos do professor
+# Certifique-se de que o backend Agg está configurado para evitar o erro Tkinter
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Importar suas funções de extratores dos arquivos separados
 from extractors.glcm import glcm
 from extractors.lbp import lbp
 from extractors.lpq import lpq
 
-# Modelos e avaliação
 from sklearn.model_selection import KFold, train_test_split, GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score, confusion_matrix, classification_report
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.preprocessing import StandardScaler # Normalização das características
+from sklearn.preprocessing import StandardScaler
+
+# Usado para capturar a saída do classification_report
+import io
+import sys
 
 # Configurações Globais
 DATA_DIR = 'soybean-images' # Caminho para a pasta que contém as subpastas das classes de imagens
@@ -98,11 +100,13 @@ def load_and_extract_features(data_directory): #Função de Carregamento e Extra
     print("Extração de características concluída.")
     return np.array(all_features), np.array(all_labels)
 
-def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5): # Função para Treinar e Avaliar Modelos com GridSearchCV
+def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5):
     """
-    -> Treina e avalia classificadores KNN e Árvore de Decisão usando GridSearchCV e validação cruzada. 
-    Em seguida, avalia os melhores modelos no conjunto de teste.
-    -> Args:
+    Treina e avalia classificadores KNN e Árvore de Decisão usando GridSearchCV
+    e validação cruzada. Em seguida, avalia os melhores modelos no conjunto de teste.
+    Salva os relatórios de classificação em arquivos .txt e as matrizes de confusão em .png.
+
+    Args:
         X_train (numpy.ndarray): Características do conjunto de treino.
         y_train (numpy.ndarray): Rótulos do conjunto de treino.
         X_test (numpy.ndarray): Características do conjunto de teste.
@@ -113,12 +117,12 @@ def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5): # Fu
 
     print(f"\nIniciando otimização de hiperparâmetros com GridSearchCV ({k_folds} folds)...\n")
 
-    # Otimização de Hiperparâmetros para KNN com GridSearchCV
+    # --- Otimização de Hiperparâmetros para KNN com GridSearchCV ---
     print("Otimizando K-Nearest Neighbors (KNN)...")
     param_grid_knn = {
-        'n_neighbors': [3, 5, 7, 9, 11, 13, 15], # Experimente mais valores se quiser
-        'weights': ['uniform', 'distance'], # Uniform: todos os vizinhos têm o mesmo peso; Distance: vizinhos mais próximos pesam mais
-        'metric': ['euclidean', 'manhattan'] # Distância para calcular a proximidade
+        'n_neighbors': [3, 5, 7, 9, 11, 13, 15],
+        'weights': ['uniform', 'distance'],
+        'metric': ['euclidean', 'manhattan']
     }
     grid_search_knn = GridSearchCV(KNeighborsClassifier(), param_grid_knn, cv=kf, scoring='accuracy', n_jobs=-1, verbose=1)
     grid_search_knn.fit(X_train, y_train)
@@ -127,12 +131,12 @@ def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5): # Fu
     print(f"Melhor acurácia (média da validação cruzada) para KNN: {grid_search_knn.best_score_:.4f}")
     best_knn_model = grid_search_knn.best_estimator_
 
-    # Otimização de Hiperparâmetros para Árvore de Decisão com GridSearchCV
+    # --- Otimização de Hiperparâmetros para Árvore de Decisão com GridSearchCV ---
     print("\nOtimizando Árvore de Decisão...")
     param_grid_dtree = {
-        'max_depth': [None, 5, 10, 15, 20], # None significa profundidade total; valores inteiros limitam a profundidade
-        'min_samples_leaf': [1, 5, 10, 20], # Número mínimo de amostras que uma folha deve ter
-        'criterion': ['gini', 'entropy'] # Gini impurity ou ganho de informação (entropia)
+        'max_depth': [None, 5, 10, 15, 20],
+        'min_samples_leaf': [1, 5, 10, 20],
+        'criterion': ['gini', 'entropy']
     }
     grid_search_dtree = GridSearchCV(DecisionTreeClassifier(random_state=42), param_grid_dtree, cv=kf, scoring='accuracy', n_jobs=-1, verbose=1)
     grid_search_dtree.fit(X_train, y_train)
@@ -147,10 +151,22 @@ def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5): # Fu
     print("\n--- Avaliando o Melhor Modelo KNN no Conjunto de Teste ---")
     y_pred_knn_final = best_knn_model.predict(X_test)
 
-    print("\nKNN - Relatório de Classificação:")
-    # classification_report é ótimo para ver Precision, Recall, F1-Score por classe
-    # zero_division=0 evita Warnings/Erros se uma classe não tiver amostras preditas ou reais
+    # Capturar e salvar o relatório de classificação do KNN
+    knn_report_str = io.StringIO() # Cria um objeto "arquivo" em memória
+    sys.stdout = knn_report_str # Redireciona a saída padrão para o objeto em memória
     print(classification_report(y_test, y_pred_knn_final, target_names=CLASS_NAMES, zero_division=0))
+    sys.stdout = sys.__stdout__ # Restaura a saída padrão para o terminal
+    
+    knn_report_text = knn_report_str.getvalue() # Obtém o conteúdo capturado
+    print("\nKNN - Relatório de Classificação (também salvo em 'relatorio_knn.txt'):")
+    print(knn_report_text) # Imprime no terminal
+    with open('relatorio_knn.txt', 'w') as f: # Salva em arquivo
+        f.write("Relatório de Classificação - K-Nearest Neighbors (KNN)\n")
+        f.write(f"Melhores Parâmetros: {grid_search_knn.best_params_}\n")
+        f.write(f"Acurácia Média da Validação Cruzada: {grid_search_knn.best_score_:.4f}\n\n")
+        f.write(knn_report_text)
+    print("Relatório KNN salvo em 'relatorio_knn.txt'\n")
+
 
     # Matriz de Confusão para KNN
     cm_knn_final = confusion_matrix(y_test, y_pred_knn_final)
@@ -160,15 +176,30 @@ def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5): # Fu
     plt.title('Matriz de Confusão - KNN (Conjunto de Teste)')
     plt.xlabel('Predito')
     plt.ylabel('Verdadeiro')
-    plt.savefig('matriz_confusao_knn.png') # Adicione esta linha para salvar a figura
-    plt.close() # Opcional: fecha a figura da memória após salvar para liberar recursos
+    plt.savefig('matriz_confusao_knn.png') # Salva a figura em PNG
+    plt.close() # Fecha a figura para liberar recursos
+
 
     # --- Avaliação Árvore de Decisão ---
     print("\n--- Avaliando o Melhor Modelo de Árvore de Decisão no Conjunto de Teste ---")
     y_pred_dtree_final = best_dtree_model.predict(X_test)
 
-    print("\nÁrvore de Decisão - Relatório de Classificação:")
+    # Capturar e salvar o relatório de classificação da Árvore de Decisão
+    dtree_report_str = io.StringIO()
+    sys.stdout = dtree_report_str
     print(classification_report(y_test, y_pred_dtree_final, target_names=CLASS_NAMES, zero_division=0))
+    sys.stdout = sys.__stdout__
+    
+    dtree_report_text = dtree_report_str.getvalue()
+    print("\nÁrvore de Decisão - Relatório de Classificação (também salvo em 'relatorio_arvore_decisao.txt'):")
+    print(dtree_report_text)
+    with open('relatorio_arvore_decisao.txt', 'w') as f:
+        f.write("Relatório de Classificação - Árvore de Decisão\n")
+        f.write(f"Melhores Parâmetros: {grid_search_dtree.best_params_}\n")
+        f.write(f"Acurácia Média da Validação Cruzada: {grid_search_dtree.best_score_:.4f}\n\n")
+        f.write(dtree_report_text)
+    print("Relatório Árvore de Decisão salvo em 'relatorio_arvore_decisao.txt'\n")
+
 
     # Matriz de Confusão para Árvore de Decisão
     cm_dtree_final = confusion_matrix(y_test, y_pred_dtree_final)
@@ -178,7 +209,8 @@ def train_and_evaluate_models(X_train, y_train, X_test, y_test, k_folds=5): # Fu
     plt.title('Matriz de Confusão - Árvore de Decisão (Conjunto de Teste)')
     plt.xlabel('Predito')
     plt.ylabel('Verdadeiro')
-    plt.show()
+    plt.savefig('matriz_confusao_arvore_decisao.png') # Salva a figura em PNG
+    plt.close() # Fecha a figura para liberar recursos
 
 # Main do programa
 if __name__ == "__main__":
@@ -189,19 +221,14 @@ if __name__ == "__main__":
     if X_raw.shape[0] == 0:
         print("\nNenhuma imagem processada. Verifique o caminho DATA_DIR e a estrutura das pastas/arquivos.")
     else:
-        # Normalização das Características (boa prática, para que nenhuma domine o classificador)
-        print("\nNormalizando as características...")
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X_raw)
-        print("Normalização concluída.")
 
-        # Divisão dos Dados (Treino e Teste)
         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_raw, test_size=0.3, random_state=42, stratify=y_raw)
 
         print(f"\nTamanho do conjunto de treino: {len(X_train)} amostras")
         print(f"Tamanho do conjunto de teste: {len(X_test)} amostras\n")
 
-        # reinamento e Avaliação dos Modelos
         train_and_evaluate_models(X_train, y_train, X_test, y_test)
 
     print("\n--- Execução do Sistema de Classificação de Soja Concluída ---")
