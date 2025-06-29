@@ -3,7 +3,7 @@
 - Autores:
     - Gabriela Smith Ferreira
     - Luiz Felipe Corumba
-    - Rafael Machado Wanner
+    - Rafael Machado Wannera
 
 # Instalando as Dependências
 

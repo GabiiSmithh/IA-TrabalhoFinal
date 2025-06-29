@@ -1,0 +1,16 @@
+Relatório de Classificação - Árvore de Decisão
+Melhores Parâmetros: {'C': 10, 'degree': 2, 'gamma': 'scale', 'kernel': 'rbf'}
+Acurácia Média da Validação Cruzada: 0.7365
+
+              precision    recall  f1-score   support
+
+      intact       0.79      0.82      0.81       360
+     spotted       0.69      0.68      0.68       317
+    immature       0.78      0.80      0.79       338
+      broken       0.70      0.66      0.68       301
+ skin-damage       0.75      0.74      0.74       338
+
+    accuracy                           0.74      1654
+   macro avg       0.74      0.74      0.74      1654
+weighted avg       0.74      0.74      0.74      1654
+
