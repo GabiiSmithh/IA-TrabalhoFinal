@@ -1,0 +1,16 @@
+Relatório de Classificação - K-Nearest Neighbors (KNN)
+Melhores Parâmetros: {'metric': 'manhattan', 'n_neighbors': 15, 'weights': 'distance'}
+Acurácia Média da Validação Cruzada: 0.5789
+
+              precision    recall  f1-score   support
+
+      intact       0.58      0.77      0.66       360
+     spotted       0.58      0.49      0.53       317
+    immature       0.59      0.64      0.61       338
+      broken       0.62      0.44      0.52       301
+ skin-damage       0.63      0.60      0.62       338
+
+    accuracy                           0.60      1654
+   macro avg       0.60      0.59      0.59      1654
+weighted avg       0.60      0.60      0.59      1654
+
